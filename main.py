@@ -1,6 +1,7 @@
 import pygame 
 import sys    # Biblioteca usada para fechar a janela do jogo  
 import logic  # Importa a ponte de lógica que criamos
+from src.logic.pontuacao import GerenciadorPontuacao 
 
 #inicializa os modulos do pygame
 pygame.init() 
@@ -19,6 +20,10 @@ menu, jogando, GAME_OVER = 'MENU', 'JOGANDO', 'GAME_OVER'
 estado_Atual = menu
 pontos = 0
 desafio = None # A variavel precisa existir, por isso 'None' que vai ser substituido depois
+
+# Instancia o motor de pontuação
+sistema_pontos = GerenciadorPontuacao()
+tempo_restante = 0 # Variável pro cronômetro da rodada
 
 def desenhar_texto(texto, cor, y_offset, fonte):
     # Função para ajudar na centralização dos textos na tela
@@ -39,8 +44,12 @@ while True:
         if estado_Atual == menu: # Jogador está no menu
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_RETURN: # ENTER começa
-                    pontos = 0
-                    desafio = logic.obter_novo_desafio(pontos) # Busca o primeiro desafio
+                    sistema_pontos.resetar_partida() # Zera o score e combo
+                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
+
+                    # ENCHE O CRONÔMETRO ANTES DE COMEÇAR!
+                    tempo_restante = sistema_pontos.calcular_tempo_limite()
+
                     estado_Atual = jogando
 
         elif estado_Atual == jogando: # Jogador está jogando
@@ -55,19 +64,38 @@ while True:
                 if escolha: # Confere a resposta do jogador
                     # Valida a resposta usando o novo logic.py
                     if logic.validar_jogada(escolha, desafio["corretas"]):
-                        pontos += 1
-                        desafio = logic.obter_novo_desafio(pontos) # Atualiza o desafio e o nível
+                        # Se a resposta estiver correta, aumenta os pontos usando o sistema de pontuação
+                        sistema_pontos.registrar_acerto() 
+                        # Atualiza o desafio passando o novo score
+                        desafio = logic.obter_novo_desafio(sistema_pontos.score) 
+                        # Atualiza o tempo restante baseado no score atual
+                        tempo_restante = sistema_pontos.calcular_tempo_limite()
                     else:
+                        # SE ERROU A TECLA
+                        sistema_pontos.salvar_recorde()
                         estado_Atual = GAME_OVER
 
         elif estado_Atual == GAME_OVER:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_r:   # R reinicia o jogo
-                    pontos = 0
-                    desafio = logic.obter_novo_desafio(pontos)
+                    sistema_pontos.resetar_partida() # Zera o score e combo
+                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                    
+                    # ENCHE O CRONÔMETRO DE NOVO AQUI TAMBÉM!
+                    tempo_restante = sistema_pontos.calcular_tempo_limite()
+
                     estado_Atual = jogando
                 elif evento.key == pygame.K_ESCAPE: # ESC volta pro menu
                     estado_Atual = menu
+
+    # CRONÔMETRO: Diminui o tempo a cada frame
+
+    if estado_Atual == jogando:
+        tempo_restante -= relogio.get_time() / 1000.0 
+        
+        if tempo_restante <= 0: # O tempo esgotou!
+            sistema_pontos.salvar_recorde()
+            estado_Atual = GAME_OVER
     
     # Escreve na tela 
     if estado_Atual == menu:
@@ -76,15 +104,20 @@ while True:
     
     elif estado_Atual == jogando:
         cores_niveis = [(20,20,25), (30,50,30), (50,30,30), (30,30,50), (50,50,20)] # Cores base por nivel
-        idx_cor = min(pontos // 5, 4) # Aqui vai até 4 porque listas começam no 0
+        idx_cor = min(sistema_pontos.score // 500, 4) # Aqui vai até 4 porque listas começam no 0
         tela.fill(cores_niveis[idx_cor]) # Pinta o fundo com a cor do nível
         desenhar_texto(desafio["texto"], (255, 255, 255), -30, fonte_Grande)
-        desenhar_texto(f"Pontos: {pontos}", (0, 255, 100), 100, fonte_Pequena)
+        desenhar_texto(f"Score: {sistema_pontos.score}", (0, 255, 100), 100, fonte_Pequena)
+        desenhar_texto(f"Combo: {sistema_pontos.combo}x (Mult: {sistema_pontos.multiplicador}x)", (255, 200, 0), 140, fonte_Pequena)
+        
+        # Desenha o cronômetro
+        desenhar_texto(f"Tempo: {tempo_restante:.1f}s", (255, 50, 50), 180, fonte_Pequena)
 
     elif estado_Atual == GAME_OVER:
         tela.fill((50, 10, 10)) # Fundo avermelhado para o fim de jogo
         desenhar_texto("GAME OVER", (255, 50, 50), -50, fonte_Grande)
-        desenhar_texto(f"Score Final: {pontos}", (255, 255, 255), 20, fonte_Pequena)
+        desenhar_texto(f"Score Final: {sistema_pontos.score}", (255, 255, 255), 20, fonte_Pequena)
+        desenhar_texto(f"Recorde Máximo: {sistema_pontos.high_score}", (255, 215, 0), 60, fonte_Pequena)
         desenhar_texto("Pressione R para tentar de novo", (100, 100, 100), 100, fonte_Pequena)
 
     pygame.display.flip() # Atualiza o desenho na tela do computador
