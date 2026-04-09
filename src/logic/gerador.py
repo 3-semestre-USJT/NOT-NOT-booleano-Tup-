@@ -1,10 +1,11 @@
+# A ideia é importar a função da biblioteca de expressões aqui
 from random import choice 
 
 def sortear_desafio(nivel=1): 
     # nivel=1 porque começa aqui. Não precisa declarar os outros, o Python já vai atualizando conforme os pontos
     # O nome disso é Default Argument 
 
-    direcoes = ['UP', 'DOWN', 'LEFT', 'RIGHT' ] # As direcoes possiveis
+    direcoes = ['CIMA', 'BAIXO', 'ESQUERDA', 'DIREITA' ] # As direcoes possiveis
     alvo = choice(direcoes) # Escolhe uma das direcoes para ser o alvo
 
 # nivel 1 tem só NOT

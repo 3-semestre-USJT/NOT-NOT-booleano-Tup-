@@ -1,10 +1,16 @@
 import pygame 
-import sys    # Biblioteca usada para fechar a janela do jogo  
+import os     # Padroniza caminhos de arquivos p/ que o jogo rode em qualquer computador sem dar erro de 'Pasta não encontrada'
+import sys    # Biblioteca usada para fechar a janela do jogo
 import logic  # Importa a ponte de lógica que criamos
 from src.logic.pontuacao import GerenciadorPontuacao 
+from src.ui.cores import * # Para organizar a interface
+from src.ui.menus import exibir_menu_principal, exibir_game_over
+from src.ui.tela_jogo import exibir_gameplay
 
-#inicializa os modulos do pygame
-pygame.init() 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Garante o endereço para carregar a fonte do jogo
+CAMINHO_FONTE = os.path.join(BASE_DIR, "assets", "fonts", "PressStart2P-Regular.ttf") # Caminho até a fonte
+
+pygame.init() # inicializa os modulos do pygame
 
 # Tela e FPS
 largura, altura = 800, 600
@@ -12,11 +18,20 @@ tela = pygame.display.set_mode((largura, altura))
 relogio = pygame.time.Clock() # Controla a velocidade do jogo
 
 # Fontes 
-fonte_Grande = pygame.font.SysFont('Arial', 60, bold=True)
-fonte_Pequena = pygame.font.SysFont('Arial', 30)
+fonte_Grande = pygame.font.Font(CAMINHO_FONTE, 35)
+fonte_Media = pygame.font.Font(CAMINHO_FONTE, 20)
+fonte_Pequena = pygame.font.Font(CAMINHO_FONTE, 15)
+
+# Agrupando fontes para facilitar o envio para as funções de UI
+fontes_jogo = {
+    'grande': fonte_Grande,
+    'media': fonte_Media,
+    'pequena': fonte_Pequena
+}
 
 # Possíveis estados do jogo
-menu, jogando, GAME_OVER = 'MENU', 'JOGANDO', 'GAME_OVER'
+menu, jogando, GAME_OVER, REGISTRANDO = 'MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO'
+nome_input = "" # Variável para guardar as 3 letras que o jogador vai digitar
 estado_Atual = menu
 pontos = 0
 desafio = None # A variavel precisa existir, por isso 'None' que vai ser substituido depois
@@ -25,15 +40,23 @@ desafio = None # A variavel precisa existir, por isso 'None' que vai ser substit
 sistema_pontos = GerenciadorPontuacao()
 tempo_restante = 0 # Variável pro cronômetro da rodada
 
-def desenhar_texto(texto, cor, y_offset, fonte):
-    # Função para ajudar na centralização dos textos na tela
-    surface = fonte.render(texto, True, cor)
+def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
+    # Se o texto for maior que a largura máxima, diminui a fonte
+    tamanho_atual = fonte_base.get_height()
+    nova_fonte = fonte_base
+    
+    # Enquanto o texto for largo demais, reduz o tamanho (mínimo de 10px)
+    while nova_fonte.size(texto)[0] > max_largura and tamanho_atual > 10:
+        tamanho_atual -= 2
+        nova_fonte = pygame.font.Font(CAMINHO_FONTE, tamanho_atual)
+
+    surface = nova_fonte.render(texto, True, cor)
     rect = surface.get_rect(center=(largura // 2, altura // 2 + y_offset))
     tela.blit(surface, rect)
 
 # Loop principal do jogo
 while True:
-    tela.fill((20, 20, 25)) # Pinta o fundo de azul
+    tela.fill((CINZA_ESCURO)) # Pinta o fundo
 
     # Captura dos eventos
     for evento in pygame.event.get():
@@ -56,10 +79,10 @@ while True:
             if evento.type == pygame.KEYDOWN:
                 # Isso aqui "transforma" as setinhas em Strings
                 escolha = None
-                if evento.key == pygame.K_UP:      escolha = "UP"
-                if evento.key == pygame.K_DOWN:    escolha = "DOWN"
-                if evento.key == pygame.K_LEFT:    escolha = "LEFT"
-                if evento.key == pygame.K_RIGHT:   escolha = "RIGHT"
+                if evento.key == pygame.K_UP:      escolha = "CIMA"
+                if evento.key == pygame.K_DOWN:    escolha = "BAIXO"
+                if evento.key == pygame.K_LEFT:    escolha = "ESQUERDA"
+                if evento.key == pygame.K_RIGHT:   escolha = "DIREITA"
 
                 if escolha: # Confere a resposta do jogador
                     # Valida a resposta usando o novo logic.py
@@ -71,9 +94,11 @@ while True:
                         # Atualiza o tempo restante baseado no score atual
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
                     else:
-                        # SE ERROU A TECLA
-                        sistema_pontos.salvar_recorde()
-                        estado_Atual = GAME_OVER
+                        # Se errou a tecla, verifica se foi top 3
+                        if sistema_pontos.verificar_novo_recorde():
+                            estado_Atual = REGISTRANDO
+                        else:
+                            estado_Atual = GAME_OVER
 
         elif estado_Atual == GAME_OVER:
             if evento.type == pygame.KEYDOWN:
@@ -81,44 +106,55 @@ while True:
                     sistema_pontos.resetar_partida() # Zera o score e combo
                     desafio = logic.obter_novo_desafio(sistema_pontos.score)
                     
-                    # ENCHE O CRONÔMETRO DE NOVO AQUI TAMBÉM!
+                    # Enche o cronometro de novo
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
-
                     estado_Atual = jogando
+
                 elif evento.key == pygame.K_ESCAPE: # ESC volta pro menu
                     estado_Atual = menu
+        
+        elif estado_Atual == REGISTRANDO:
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_RETURN:
+                    if len(nome_input) == 3:
+                        # Salva no ranking e vai para o Game Over
+                        sistema_pontos.salvar_no_ranking(nome_input)
+                        nome_input = "" # Limpa para a próxima vez
+                        estado_Atual = GAME_OVER
+                
+                elif evento.key == pygame.K_BACKSPACE:
+                    nome_input = nome_input[:-1] # Apaga a última letra
+                
+                elif len(nome_input) < 3:
+                    # Captura apenas letras e transforma em maiúsculas
+                    if evento.unicode.isalpha():
+                        nome_input += evento.unicode.upper()
 
     # CRONÔMETRO: Diminui o tempo a cada frame
-
     if estado_Atual == jogando:
         tempo_restante -= relogio.get_time() / 1000.0 
         
-        if tempo_restante <= 0: # O tempo esgotou!
-            sistema_pontos.salvar_recorde()
-            estado_Atual = GAME_OVER
+        if tempo_restante <= 0:
+        # Verifica se a pontuação entra no Ranking
+            if sistema_pontos.verificar_novo_recorde():
+                estado_Atual = REGISTRANDO # Novo estado para digitar o nome
+            else:
+                estado_Atual = GAME_OVER
     
-    # Escreve na tela 
+    # PARTE VISUAL (REORGANIZADA)
     if estado_Atual == menu:
-        desenhar_texto("Tupã BOOLEAN GAME", (255, 255, 255), -50, fonte_Grande)
-        desenhar_texto("Presione ENTER para começar", (150, 150, 150), 50, fonte_Pequena)
+        exibir_menu_principal(tela, desenhar_texto, fontes_jogo)
     
     elif estado_Atual == jogando:
-        cores_niveis = [(20,20,25), (30,50,30), (50,30,30), (30,30,50), (50,50,20)] # Cores base por nivel
-        idx_cor = min(sistema_pontos.score // 500, 4) # Aqui vai até 4 porque listas começam no 0
-        tela.fill(cores_niveis[idx_cor]) # Pinta o fundo com a cor do nível
-        desenhar_texto(desafio["texto"], (255, 255, 255), -30, fonte_Grande)
-        desenhar_texto(f"Score: {sistema_pontos.score}", (0, 255, 100), 100, fonte_Pequena)
-        desenhar_texto(f"Combo: {sistema_pontos.combo}x (Mult: {sistema_pontos.multiplicador}x)", (255, 200, 0), 140, fonte_Pequena)
-        
-        # Desenha o cronômetro
-        desenhar_texto(f"Tempo: {tempo_restante:.1f}s", (255, 50, 50), 180, fonte_Pequena)
+        exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
 
     elif estado_Atual == GAME_OVER:
-        tela.fill((50, 10, 10)) # Fundo avermelhado para o fim de jogo
-        desenhar_texto("GAME OVER", (255, 50, 50), -50, fonte_Grande)
-        desenhar_texto(f"Score Final: {sistema_pontos.score}", (255, 255, 255), 20, fonte_Pequena)
-        desenhar_texto(f"Recorde Máximo: {sistema_pontos.high_score}", (255, 215, 0), 60, fonte_Pequena)
-        desenhar_texto("Pressione R para tentar de novo", (100, 100, 100), 100, fonte_Pequena)
+        exibir_game_over(tela, desenhar_texto, fontes_jogo, sistema_pontos.score, sistema_pontos.ranking)
+
+
+    elif estado_Atual == REGISTRANDO:
+        from src.ui.menus import exibir_registro_recorde
+        exibir_registro_recorde(tela, desenhar_texto, fontes_jogo, nome_input)
 
     pygame.display.flip() # Atualiza o desenho na tela do computador
     relogio.tick(60) # Jogo roda a 60 FPS
