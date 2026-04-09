@@ -205,3 +205,16 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# === Ambientes Virtuais ===
+.venv/
+env/
+venv/
+
+# === IDEs e Editores ===
+.vscode/
+.idea/
+
+# === Sistema Operacional ===
+.DS_Store
+Thumbs.db
