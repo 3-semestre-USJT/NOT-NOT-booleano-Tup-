@@ -4,7 +4,7 @@ import sys    # Biblioteca usada para fechar a janela do jogo
 import logic  # Importa a ponte de lógica que criamos
 from src.logic.pontuacao import GerenciadorPontuacao 
 from src.ui.cores import * # Para organizar a interface
-from src.ui.menus import exibir_menu_principal, exibir_game_over
+from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro
 from src.ui.tela_jogo import exibir_gameplay
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Garante o endereço para carregar a fonte do jogo
@@ -30,9 +30,9 @@ fontes_jogo = {
 }
 
 # Possíveis estados do jogo
-menu, jogando, GAME_OVER, REGISTRANDO = 'MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO'
+intro, menu, jogando, GAME_OVER, REGISTRANDO = 'INTRO','MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO'
 nome_input = "" # Variável para guardar as 3 letras que o jogador vai digitar
-estado_Atual = menu
+estado_Atual = intro #Estado Inicial do jogo
 pontos = 0
 desafio = None # A variavel precisa existir, por isso 'None' que vai ser substituido depois
 
@@ -56,6 +56,16 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
 
 # Loop principal do jogo
 while True:
+    if estado_Atual == intro: # Jogador esta iniciando o jogo
+            #  Inicia apenas a intro
+            deve_continuar = exibir_video_intro(tela, "assets/videos/intro_teste.mp4")
+            if deve_continuar:
+                estado_Atual = menu # Video acabou ou jogador apertou ESC
+            else:
+                pygame.quit() # Jogador apertou (X)Janela
+                sys.exit()
+                continue # Continua para as outras funções (captura de eventos, estado atual...)
+
     tela.fill((CINZA_ESCURO)) # Pinta o fundo
 
     # Captura dos eventos
