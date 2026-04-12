@@ -1,51 +1,74 @@
-import pygame 
-import os     # Padroniza caminhos de arquivos p/ que o jogo rode em qualquer computador sem dar erro de 'Pasta não encontrada'
-import sys    # Biblioteca usada para fechar a janela do jogo
-import logic  # Importa a ponte de lógica que criamos
-from src.logic.pontuacao import GerenciadorPontuacao 
-from src.ui.cores import * # Para organizar a interface
+import pygame
+import os
+import sys
+import logic
+from src.logic.pontuacao import GerenciadorPontuacao
+from src.ui.cores import *
 from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro
 from src.ui.tela_jogo import exibir_gameplay
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Garante o endereço para carregar a fonte do jogo
-CAMINHO_FONTE = os.path.join(BASE_DIR, "assets", "fonts", "PressStart2P-Regular.ttf") # Caminho até a fonte
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CAMINHO_FONTE = os.path.join(BASE_DIR, "assets", "fonts", "PressStart2P-Regular.ttf")
 
-pygame.init() # inicializa os modulos do pygame
+pygame.init()
 
 # Tela e FPS
-largura, altura = 800, 600
+largura, altura = 1280, 720
 tela = pygame.display.set_mode((largura, altura))
-relogio = pygame.time.Clock() # Controla a velocidade do jogo
+relogio = pygame.time.Clock()
 
-# Fontes 
+# Fontes
 fonte_Grande = pygame.font.Font(CAMINHO_FONTE, 35)
 fonte_Media = pygame.font.Font(CAMINHO_FONTE, 20)
 fonte_Pequena = pygame.font.Font(CAMINHO_FONTE, 15)
 
-# Agrupando fontes para facilitar o envio para as funções de UI
 fontes_jogo = {
     'grande': fonte_Grande,
     'media': fonte_Media,
     'pequena': fonte_Pequena
 }
 
-# Possíveis estados do jogo
-intro, menu, jogando, GAME_OVER, REGISTRANDO = 'INTRO','MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO'
-nome_input = "" # Variável para guardar as 3 letras que o jogador vai digitar
-estado_Atual = intro #Estado Inicial do jogo
-pontos = 0
-desafio = None # A variavel precisa existir, por isso 'None' que vai ser substituido depois
+# Estados
+intro, menu, jogando, GAME_OVER, REGISTRANDO, OPCOES = 'INTRO', 'MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO', 'OPCOES'
 
-# Instancia o motor de pontuação
+nome_input = ""
+estado_Atual = intro
+opcao_menu = 0
+opcao_opcoes = 0
+y_creditos = 600  # começa fora da tela (embaixo)
+
+resolucoes = [
+    (800, 600),
+    (1280, 720),
+    (1920, 1080),
+    "FULLSCREEN"
+]
+
+def aplicar_resolucao(opcao):
+    global tela, largura, altura
+
+    if opcao == "FULLSCREEN":
+        tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        largura, altura = tela.get_size()
+    else:
+        largura, altura = opcao
+        tela = pygame.display.set_mode((largura, altura))
+
+
+
+
+pontos = 0
+desafio = None
+
 sistema_pontos = GerenciadorPontuacao()
-tempo_restante = 0 # Variável pro cronômetro da rodada
+tempo_restante = 0
+
+
 
 def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
-    # Se o texto for maior que a largura máxima, diminui a fonte
     tamanho_atual = fonte_base.get_height()
     nova_fonte = fonte_base
-    
-    # Enquanto o texto for largo demais, reduz o tamanho (mínimo de 10px)
+
     while nova_fonte.size(texto)[0] > max_largura and tamanho_atual > 10:
         tamanho_atual -= 2
         nova_fonte = pygame.font.Font(CAMINHO_FONTE, tamanho_atual)
@@ -54,117 +77,140 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     rect = surface.get_rect(center=(largura // 2, altura // 2 + y_offset))
     tela.blit(surface, rect)
 
-# Loop principal do jogo
+
+# Loop principal
 while True:
-    if estado_Atual == intro: # Jogador esta iniciando o jogo
-            #  Inicia apenas a intro
-            deve_continuar = exibir_video_intro(tela, "assets/videos/intro_teste.mp4")
-            if deve_continuar:
-                estado_Atual = menu # Video acabou ou jogador apertou ESC
-            else:
-                pygame.quit() # Jogador apertou (X)Janela
-                sys.exit()
-                continue # Continua para as outras funções (captura de eventos, estado atual...)
+    if estado_Atual == intro:
+        deve_continuar = exibir_video_intro(tela, "assets/videos/tupa_intro.mp4")
+        if deve_continuar:
+            estado_Atual = menu
+        else:
+            pygame.quit()
+            sys.exit()
+            continue
 
-    tela.fill((CINZA_ESCURO)) # Pinta o fundo
+#COR
+    tela.fill((PRETO))
 
-    # Captura dos eventos
     for evento in pygame.event.get():
-        if evento.type == pygame.QUIT: # Se clicar no X da janela
-            pygame.quit() # Encerra o pygame
-            sys.exit() # Fecha o programa 
+        if evento.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
-        if estado_Atual == menu: # Jogador está no menu
+        # MENU
+        if estado_Atual == menu:
             if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_RETURN: # ENTER começa
-                    sistema_pontos.resetar_partida() # Zera o score e combo
-                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
 
-                    # ENCHE O CRONÔMETRO ANTES DE COMEÇAR!
-                    tempo_restante = sistema_pontos.calcular_tempo_limite()
+                if evento.key == pygame.K_UP:
+                    opcao_menu = (opcao_menu - 1) % 2
 
-                    estado_Atual = jogando
+                elif evento.key == pygame.K_DOWN:
+                    opcao_menu = (opcao_menu + 1) % 2
 
-        elif estado_Atual == jogando: # Jogador está jogando
+                elif evento.key == pygame.K_RETURN:
+
+                    if opcao_menu == 0:  # JOGAR
+                        sistema_pontos.resetar_partida()
+                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        tempo_restante = sistema_pontos.calcular_tempo_limite()
+                        estado_Atual = jogando
+
+                    elif opcao_menu == 1:  # OPÇÕES
+                        estado_Atual = OPCOES
+
+        # JOGO
+        elif estado_Atual == jogando:
             if evento.type == pygame.KEYDOWN:
-                # Isso aqui "transforma" as setinhas em Strings
                 escolha = None
-                if evento.key == pygame.K_UP:      escolha = "CIMA"
-                if evento.key == pygame.K_DOWN:    escolha = "BAIXO"
-                if evento.key == pygame.K_LEFT:    escolha = "ESQUERDA"
-                if evento.key == pygame.K_RIGHT:   escolha = "DIREITA"
+                if evento.key == pygame.K_UP: escolha = "CIMA"
+                if evento.key == pygame.K_DOWN: escolha = "BAIXO"
+                if evento.key == pygame.K_LEFT: escolha = "ESQUERDA"
+                if evento.key == pygame.K_RIGHT: escolha = "DIREITA"
 
-                if escolha: # Confere a resposta do jogador
-                    # Valida a resposta usando o novo logic.py
+                if escolha:
                     if logic.validar_jogada(escolha, desafio["corretas"]):
-                        # Se a resposta estiver correta, aumenta os pontos usando o sistema de pontuação
-                        sistema_pontos.registrar_acerto() 
-                        # Atualiza o desafio passando o novo score
-                        desafio = logic.obter_novo_desafio(sistema_pontos.score) 
-                        # Atualiza o tempo restante baseado no score atual
+                        sistema_pontos.registrar_acerto()
+                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
                     else:
-                        # Se errou a tecla, verifica se foi top 3
                         if sistema_pontos.verificar_novo_recorde():
                             estado_Atual = REGISTRANDO
                         else:
                             estado_Atual = GAME_OVER
 
+        # GAME OVER
         elif estado_Atual == GAME_OVER:
             if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_r:   # R reinicia o jogo
-                    sistema_pontos.resetar_partida() # Zera o score e combo
+                if evento.key == pygame.K_r:
+                    sistema_pontos.resetar_partida()
                     desafio = logic.obter_novo_desafio(sistema_pontos.score)
-                    
-                    # Enche o cronometro de novo
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
                     estado_Atual = jogando
 
-                elif evento.key == pygame.K_ESCAPE: # ESC volta pro menu
+                elif evento.key == pygame.K_ESCAPE:
                     estado_Atual = menu
-        
+
+        # REGISTRO
         elif estado_Atual == REGISTRANDO:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_RETURN:
                     if len(nome_input) == 3:
-                        # Salva no ranking e vai para o Game Over
                         sistema_pontos.salvar_no_ranking(nome_input)
-                        nome_input = "" # Limpa para a próxima vez
+                        nome_input = ""
                         estado_Atual = GAME_OVER
-                
+
                 elif evento.key == pygame.K_BACKSPACE:
-                    nome_input = nome_input[:-1] # Apaga a última letra
-                
+                    nome_input = nome_input[:-1]
+
                 elif len(nome_input) < 3:
-                    # Captura apenas letras e transforma em maiúsculas
                     if evento.unicode.isalpha():
                         nome_input += evento.unicode.upper()
 
-    # CRONÔMETRO: Diminui o tempo a cada frame
+        # OPÇÕES
+        elif estado_Atual == OPCOES:
+            if evento.type == pygame.KEYDOWN:
+
+                if evento.key == pygame.K_UP:
+                    opcao_opcoes = (opcao_opcoes - 1) % len(resolucoes)
+
+                elif evento.key == pygame.K_DOWN:
+                    opcao_opcoes = (opcao_opcoes + 1) % len(resolucoes)
+
+                elif evento.key == pygame.K_RETURN:
+                    aplicar_resolucao(resolucoes[opcao_opcoes])
+
+                elif evento.key == pygame.K_ESCAPE:
+                    estado_Atual = menu
+
+    # CRONÔMETRO
     if estado_Atual == jogando:
-        tempo_restante -= relogio.get_time() / 1000.0 
-        
+        tempo_restante -= relogio.get_time() / 1000.0
+
         if tempo_restante <= 0:
-        # Verifica se a pontuação entra no Ranking
             if sistema_pontos.verificar_novo_recorde():
-                estado_Atual = REGISTRANDO # Novo estado para digitar o nome
+                estado_Atual = REGISTRANDO
             else:
                 estado_Atual = GAME_OVER
-    
-    # PARTE VISUAL (REORGANIZADA)
+
+    # RENDER
     if estado_Atual == menu:
-        exibir_menu_principal(tela, desenhar_texto, fontes_jogo)
-    
+        exibir_menu_principal(tela, desenhar_texto, fontes_jogo, opcao_menu)
+
     elif estado_Atual == jogando:
         exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
 
     elif estado_Atual == GAME_OVER:
         exibir_game_over(tela, desenhar_texto, fontes_jogo, sistema_pontos.score, sistema_pontos.ranking)
 
-
     elif estado_Atual == REGISTRANDO:
         from src.ui.menus import exibir_registro_recorde
+
         exibir_registro_recorde(tela, desenhar_texto, fontes_jogo, nome_input)
 
-    pygame.display.flip() # Atualiza o desenho na tela do computador
-    relogio.tick(60) # Jogo roda a 60 FPS
+    elif estado_Atual == OPCOES:
+        from src.ui.menus import exibir_opcoes
+
+        exibir_opcoes(tela, desenhar_texto, fontes_jogo, opcao_opcoes, resolucoes)
+
+    pygame.display.flip()
+    relogio.tick(60)
