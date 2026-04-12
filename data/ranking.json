@@ -1,14 +1,14 @@
 [
     {
         "nome": "FUR",
+        "pontos": 3700
+    },
+    {
+        "nome": "FUR",
         "pontos": 1200
     },
     {
-        "nome": "POU",
-        "pontos": 1000
-    },
-    {
-        "nome": "PIU",
-        "pontos": 600
+        "nome": "AOE",
+        "pontos": 1200
     }
 ]
