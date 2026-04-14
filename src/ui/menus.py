@@ -1,20 +1,20 @@
 from src.ui.cores import *
 import pygame
 import cv2
+from src.ui import botoes
 
-def escalar_proporcional(imagem, tela):
+def escala_tela(imagem, tela):
     largura_tela, altura_tela = tela.get_size()
-    largura_img, altura_img = imagem.get_size()
-
-    escala = min(largura_tela / largura_img, altura_tela / altura_img)
-
-    nova_largura = int(largura_img * escala)
-    nova_altura = int(altura_img * escala)
-
-    return pygame.transform.scale(imagem, (nova_largura, nova_altura))
+    
+    # Irá Redimensionar a imagem forçando ela a ter o tamanho exato da tela
+    # smoothscale é utilizado para a imagem não ficar muito pixelada ao esticar
+    return pygame.transform.smoothscale(imagem, (largura_tela, altura_tela))
 
 
+    # Toca o video da intro
 def exibir_video_intro(tela, caminho_video):
+    
+    #Carrega o video utilizando OpenCV
     cap = cv2.VideoCapture(caminho_video)
     relogio = pygame.time.Clock()
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -38,11 +38,12 @@ def exibir_video_intro(tela, caminho_video):
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         tamanho = frame_rgb.shape[1::-1]
-        surface_frame = pygame.image.frombuffer(frame_rgb.tobytes(), tamanho, "RGB")
-        surface_frame = escalar_proporcional(surface_frame, tela)
+        surface_frame = pygame.image.frombuffer(frame_rgb.tobytes(),tamanho,"RGB")
+        # Redimenciona o video para cobrir a tela inteira
+        surface_frame = escala_tela(surface_frame,tela)
 
-        rect = surface_frame.get_rect(center=(tela.get_width() // 2, tela.get_height() // 2))
-        tela.blit(surface_frame, rect)
+        # Mostra o video na tela
+        tela.blit(surface_frame, (0,0)) 
         pygame.display.flip()
         relogio.tick(fps)
 
@@ -50,19 +51,54 @@ def exibir_video_intro(tela, caminho_video):
     return ir_para_menu
 
 
-# MENU NOVO
-def exibir_menu_principal(tela, desenhar_texto_func, fontes, opcao_selecionada):
+def exibir_menu_principal(tela, desenhar_texto_func, fontes):
+    # Desenha a tela inicial do jogo
     desenhar_texto_func("TupãStudios", BRANCO, -250, fontes['media'])
-    desenhar_texto_func("! INDEXERROR", BRANCO, -100, fontes['grande'])
+    desenhar_texto_func("! INDEXERROR", BRANCO, -150, fontes['grande'])
+    
+    play_button, config_button, quit_button = botao_escalonado(tela)
 
-    opcoes = ["JOGAR", "OPÇÕES"]
+    play_button.exibir_botao(tela)
+    config_button.exibir_botao(tela)
+    quit_button.exibir_botao(tela)
 
-    for i, opcao in enumerate(opcoes):
-        cor = AMARELO if i == opcao_selecionada else BRANCO
-        desenhar_texto_func(opcao, cor, i * 60, fontes['media'])
-        desenhar_texto_func("Use ↑ ↓ e ENTER", CINZA_CLARO, 200, fontes['pequena'])
+def botao_escalonado(tela):
+    largura_tela, altura_tela = tela.get_size()
 
+    # Calcula o multiplicador (baseado na sua tela original de 1280x720)
+    escala_x = largura_tela / 800
+    escala_y = altura_tela / 600
 
+    # Redimensiona as imagens dos botões para não ficarem minúsculas
+    img_play = pygame.transform.smoothscale(botoes.botao_play, (int(botoes.botao_play.get_width() * escala_x), int(botoes.botao_play.get_height() * escala_y)))
+    img_config = pygame.transform.smoothscale(botoes.botao_config, (int(botoes.botao_config.get_width() * escala_x), int(botoes.botao_config.get_height() * escala_y)))
+    img_quit = pygame.transform.smoothscale(botoes.botao_sair, (int(botoes.botao_sair.get_width() * escala_x), int(botoes.botao_sair.get_height() * escala_y))) 
+   
+    #Transforma posições fixas em porcentagens (posições relativas)
+    x = largura_tela * 0.03125
+
+    # Transforma o Y (250, 320, 390 divididos por 720)
+    y_play = altura_tela * 0.3472
+    y_config = altura_tela * 0.4444
+    y_quit = altura_tela * 0.5416
+
+    # Cria e retorna as instâncias dos botões na posição certa e tamanho certo
+    play_button = botoes.botao(x, y_play, img_play)
+    config_button = botoes.botao(x, y_config, img_config)
+    quit_button = botoes.botao(x, y_quit, img_quit)
+    
+    return play_button, config_button, quit_button
+
+def obter_botao_clicado(pos, tela): 
+    play_button, config_button, quit_button = botao_escalonado(tela)
+    
+    if play_button.clicado(pos):
+        return "play"
+    elif config_button.clicado(pos):
+        return "config"
+    elif quit_button.clicado(pos):
+        return "quit"
+    return None
 
 def exibir_opcoes(tela, desenhar_texto_func, fontes, opcao_selecionada, resolucoes):
     tela.fill(PRETO)
@@ -78,11 +114,10 @@ def exibir_opcoes(tela, desenhar_texto_func, fontes, opcao_selecionada, resoluco
 
         cor = AMARELO if i == opcao_selecionada else BRANCO
 
-        desenhar_texto_func(texto, cor, i * 60 - 20, fontes['media'])
+        desenhar_texto_func(texto, cor, i * 60 -20, fontes['media'])
 
-    desenhar_texto_func("ENTER para aplicar", CINZA_CLARO, 180, fontes['pequena'])
-    desenhar_texto_func("ESC para voltar", CINZA, 220, fontes['pequena'])
-
+    desenhar_texto_func("ENTER Para aplicar", CINZA_CLARO, 180, fontes['pequena'])
+    desenhar_texto_func("ESQ para voltar", CINZA_CLARO, 220, fontes['pequena']) 
 
 def exibir_game_over(tela, desenhar_texto_func, fontes, score, ranking):
     tela.fill(VERMELHO_MORTE)

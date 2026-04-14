@@ -1,10 +1,10 @@
-import pygame
-import os
-import sys
-import logic
-from src.logic.pontuacao import GerenciadorPontuacao
-from src.ui.cores import *
-from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro
+import pygame 
+import os     # Padroniza caminhos de arquivos p/ que o jogo rode em qualquer computador sem dar erro de 'Pasta não encontrada'
+import sys    # Biblioteca usada para fechar a janela do jogo
+import logic  # Importa a ponte de lógica que criamos
+from src.logic.pontuacao import GerenciadorPontuacao 
+from src.ui.cores import * # Para organizar a interface
+from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro, obter_botao_clicado, escala_tela
 from src.ui.tela_jogo import exibir_gameplay
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,9 +15,18 @@ pygame.init()
 # Tela e FPS
 largura, altura = 1280, 720
 tela = pygame.display.set_mode((largura, altura))
-relogio = pygame.time.Clock()
+pygame.display.set_caption("!Yes !Yes - A Tupã Prodution")
+relogio = pygame.time.Clock() # Controla a velocidade do jogo
 
-# Fontes
+# Inicializa os botões após o display
+from src.ui import botoes
+botoes.inicializar_botoes()
+
+imagem_fundo_og = pygame.image.load("assets/images/img_menu.png").convert()
+imagem_fundo = pygame.transform.smoothscale(imagem_fundo_og, (largura, altura))
+
+
+# Fontes 
 fonte_Grande = pygame.font.Font(CAMINHO_FONTE, 35)
 fonte_Media = pygame.font.Font(CAMINHO_FONTE, 20)
 fonte_Pequena = pygame.font.Font(CAMINHO_FONTE, 15)
@@ -28,35 +37,13 @@ fontes_jogo = {
     'pequena': fonte_Pequena
 }
 
-# Estados
-intro, menu, jogando, GAME_OVER, REGISTRANDO, OPCOES = 'INTRO', 'MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO', 'OPCOES'
+# Possíveis estados do jogo
+intro, menu, jogando, GAME_OVER, REGISTRANDO, OPCOES = 'INTRO','MENU', 'JOGANDO', 'GAME_OVER', 'REGISTRANDO', 'OPCOES'
 
-nome_input = ""
-estado_Atual = intro
-opcao_menu = 0
+nome_input = "" # Variável para guardar as 3 letras que o jogador vai digitar
+estado_Atual = intro #Estado Inicial do jogo
+opcao_menu= 0
 opcao_opcoes = 0
-y_creditos = 600  # começa fora da tela (embaixo)
-
-resolucoes = [
-    (800, 600),
-    (1280, 720),
-    (1920, 1080),
-    "FULLSCREEN"
-]
-
-def aplicar_resolucao(opcao):
-    global tela, largura, altura
-
-    if opcao == "FULLSCREEN":
-        tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        largura, altura = tela.get_size()
-    else:
-        largura, altura = opcao
-        tela = pygame.display.set_mode((largura, altura))
-
-
-
-
 pontos = 0
 desafio = None
 
@@ -64,6 +51,27 @@ sistema_pontos = GerenciadorPontuacao()
 tempo_restante = 0
 
 
+
+resolucoes = [ 
+    (800, 600),
+    (1280, 720),
+    (1920, 1080),
+    "FULLSCREEN" 
+]
+
+# Teste teste, ignorar isso
+
+
+def aplicar_resolucao(opcao):
+    global tela, largura, altura, imagem_fundo
+
+    if opcao == "FULLSCREEN":
+        tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        largura, altura = tela.get_size()
+    else:
+        largura, altura = opcao
+        tela = pygame.display.set_mode((largura, altura))
+    imagem_fundo = escala_tela(imagem_fundo_og, tela)
 
 def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     tamanho_atual = fonte_base.get_height()
@@ -78,19 +86,8 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     tela.blit(surface, rect)
 
 
-# Loop principal
-while True:
-    if estado_Atual == intro:
-        deve_continuar = exibir_video_intro(tela, "assets/videos/tupa_intro.mp4")
-        if deve_continuar:
-            estado_Atual = menu
-        else:
-            pygame.quit()
-            sys.exit()
-            continue
-
-#COR
-    tela.fill((PRETO))
+    # ==== Desenha a imagem de Fundo ========
+    tela.blit(imagem_fundo,(0,0))
 
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
@@ -104,19 +101,36 @@ while True:
                 if evento.key == pygame.K_UP:
                     opcao_menu = (opcao_menu - 1) % 2
 
+                    estado_Atual = jogando
+            elif evento.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                acao = obter_botao_clicado(pos,tela)
+                if acao == "play":
+                    sistema_pontos.resetar_partida()
+                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                    tempo_restante = sistema_pontos.calcular_tempo_limite()
+                    estado_Atual = jogando
+                elif acao == "config":
+                    estado_Atual = OPCOES    
+                elif acao == "quit":
+                    pygame.quit()
+                    sys.exit()
+
+        elif estado_Atual == OPCOES:
+            if evento.type == pygame.KEYDOWN:
+
+                if evento.key == pygame.K_UP:
+                    opcao_opcoes = (opcao_opcoes - 1) % len(resolucoes)
+
                 elif evento.key == pygame.K_DOWN:
-                    opcao_menu = (opcao_menu + 1) % 2
+                    opcao_opcoes = (opcao_opcoes + 1) % len(resolucoes)
 
                 elif evento.key == pygame.K_RETURN:
+                    aplicar_resolucao(resolucoes[opcao_opcoes])
 
-                    if opcao_menu == 0:  # JOGAR
-                        sistema_pontos.resetar_partida()
-                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
-                        tempo_restante = sistema_pontos.calcular_tempo_limite()
-                        estado_Atual = jogando
+                elif evento.key == pygame.K_ESCAPE:
+                    estado_Atual = menu
 
-                    elif opcao_menu == 1:  # OPÇÕES
-                        estado_Atual = OPCOES
 
         # JOGO
         elif estado_Atual == jogando:
@@ -199,6 +213,10 @@ while True:
     elif estado_Atual == jogando:
         exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
 
+    elif estado_Atual == OPCOES:
+        from src.ui.menus import exibir_opcoes
+
+        exibir_opcoes(tela, desenhar_texto, fontes_jogo, opcao_opcoes, resolucoes)
     elif estado_Atual == GAME_OVER:
         exibir_game_over(tela, desenhar_texto, fontes_jogo, sistema_pontos.score, sistema_pontos.ranking)
 
