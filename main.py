@@ -59,6 +59,9 @@ resolucoes = [
     "FULLSCREEN" 
 ]
 
+# Teste teste, ignorar isso
+
+
 def aplicar_resolucao(opcao):
     global tela, largura, altura, imagem_fundo
 

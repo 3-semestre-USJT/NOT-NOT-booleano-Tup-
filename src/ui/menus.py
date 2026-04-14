@@ -6,7 +6,7 @@ from src.ui import botoes
 def escala_tela(imagem, tela):
     largura_tela, altura_tela = tela.get_size()
     
-    # Redimensiona a imagem forçando ela a ter o tamanho exato da tela
+    # Irá Redimensionar a imagem forçando ela a ter o tamanho exato da tela
     # smoothscale é utilizado para a imagem não ficar muito pixelada ao esticar
     return pygame.transform.smoothscale(imagem, (largura_tela, altura_tela))
 
