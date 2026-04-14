@@ -45,7 +45,7 @@ estado_Atual = intro #Estado Inicial do jogo
 opcao_menu= 0
 opcao_opcoes = 0
 pontos = 0
-desafio = None
+desafio = None # A variavel precisa existir, por isso 'None' que vai ser substituido depois
 
 sistema_pontos = GerenciadorPontuacao()
 tempo_restante = 0
@@ -85,6 +85,17 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     rect = surface.get_rect(center=(largura // 2, altura // 2 + y_offset))
     tela.blit(surface, rect)
 
+
+# Loop principal
+while True:
+    if estado_Atual == intro:
+        deve_continuar = exibir_video_intro(tela, "assets/videos/intro_teste.mp4")
+        if deve_continuar:
+            estado_Atual = menu
+        else:
+            pygame.quit()
+            sys.exit()
+            continue
 
     # ==== Desenha a imagem de Fundo ========
     tela.blit(imagem_fundo,(0,0))
@@ -131,6 +142,17 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
                 elif evento.key == pygame.K_ESCAPE:
                     estado_Atual = menu
 
+
+                elif evento.key == pygame.K_RETURN:
+
+                    if opcao_menu == 0:  # JOGAR
+                        sistema_pontos.resetar_partida()
+                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        tempo_restante = sistema_pontos.calcular_tempo_limite()
+                        estado_Atual = jogando
+
+                    elif opcao_menu == 1:  # OPÇÕES
+                        estado_Atual = OPCOES
 
         # JOGO
         elif estado_Atual == jogando:
@@ -208,7 +230,7 @@ def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
 
     # RENDER
     if estado_Atual == menu:
-        exibir_menu_principal(tela, desenhar_texto, fontes_jogo, opcao_menu)
+        exibir_menu_principal(tela, desenhar_texto, fontes_jogo)
 
     elif estado_Atual == jogando:
         exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
