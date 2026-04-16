@@ -51,7 +51,7 @@ def exibir_video_intro(tela, caminho_video):
     return ir_para_menu
 
 
-def exibir_menu_principal(tela, desenhar_texto_func, fontes):
+def exibir_menu_principal(tela, desenhar_texto_func, fontes, opcao_selecionada):
     # Desenha a tela inicial do jogo
     desenhar_texto_func("TupãStudios", BRANCO, -250, fontes['media'])
     desenhar_texto_func("! INDEXERROR", BRANCO, -150, fontes['grande'])
@@ -61,6 +61,19 @@ def exibir_menu_principal(tela, desenhar_texto_func, fontes):
     play_button.exibir_botao(tela)
     config_button.exibir_botao(tela)
     quit_button.exibir_botao(tela)
+
+    # Escolhe qual botão a mãozinha vai seguir
+    if opcao_selecionada == 0:
+        botao_focado = play_button
+    elif opcao_selecionada == 1:
+        botao_focado = config_button
+    else:
+        botao_focado = quit_button
+
+    # Desenha a mãozinha na esquerda do botão focado
+    mao_x = botao_focado.rect.left + 150
+    mao_y = botao_focado.rect.centery - (botoes.mao_seletora.get_height() // 2)
+    tela.blit(botoes.mao_seletora, (mao_x, mao_y))
 
 def botao_escalonado(tela):
     largura_tela, altura_tela = tela.get_size()

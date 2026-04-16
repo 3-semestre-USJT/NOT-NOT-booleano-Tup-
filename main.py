@@ -1,8 +1,8 @@
 import pygame 
 import os     # Padroniza caminhos de arquivos p/ que o jogo rode em qualquer computador sem dar erro de 'Pasta não encontrada'
 import sys    # Biblioteca usada para fechar a janela do jogo
-import logic  # Importa a ponte de lógica que criamos
-import som    # Importa a ponte de som que criamos
+import src.logic.logic as logic  # Importa a ponte de lógica que criamos
+from src.ui.som import *   # Importa a ponte de som que criamos
 from src.logic.pontuacao import GerenciadorPontuacao 
 from src.ui.cores import * # Para organizar a interface
 from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro, obter_botao_clicado, escala_tela
@@ -111,10 +111,37 @@ while True:
             if evento.type == pygame.KEYDOWN:
 
                 if evento.key == pygame.K_UP:
-                    opcao_menu = (opcao_menu - 1) % 2
+                    opcao_menu = (opcao_menu - 1) % 3 # 3 pois são 3 botoes
 
-                    estado_Atual = jogando
-            elif evento.type == pygame.MOUSEBUTTONDOWN:
+                elif evento.key == pygame.K_DOWN: # Adicionei o DOWN para você conseguir navegar pela setinha tbm
+                    opcao_menu = (opcao_menu + 1) % 3
+
+                elif evento.key == pygame.K_RETURN: # Navegação no menu usando as setinhas
+                    if opcao_menu == 0:  # primeiro botao
+                        sistema_pontos.resetar_partida()
+                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        tempo_restante = sistema_pontos.calcular_tempo_limite()
+                        estado_Atual = jogando
+                    elif opcao_menu == 1:  # segundo botao
+                        estado_Atual = OPCOES
+                    elif opcao_menu == 2:  # terceiro botao
+                        estado_Atual = quit
+                        pygame.quit()
+                        sys.exit()
+
+                # Se o mouse estiver sobre um botão, a mãozinha pula para ele
+            elif evento.type == pygame.MOUSEMOTION:
+                pos = pygame.mouse.get_pos()
+                acao = obter_botao_clicado(pos, tela)
+                
+                if acao == "play":
+                    opcao_menu = 0
+                elif acao == "config":
+                    opcao_menu = 1
+                elif acao == "quit":
+                    opcao_menu = 2
+
+            elif evento.type == pygame.MOUSEBUTTONDOWN: # Navegação no menu usando o mouse
                 pos = pygame.mouse.get_pos()
                 acao = obter_botao_clicado(pos,tela)
                 if acao == "play":
@@ -166,7 +193,7 @@ while True:
 
                 if escolha:
                     if logic.validar_jogada(escolha, desafio["corretas"]):
-                        som.tocar_acerto()
+                        tocar_acerto()
                         sistema_pontos.registrar_acerto()
                         desafio = logic.obter_novo_desafio(sistema_pontos.score)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
@@ -175,7 +202,7 @@ while True:
                             estado_Atual = REGISTRANDO
                         else:
                             estado_Atual = GAME_OVER
-                            som.tocar_erro()
+                            tocar_erro()
 
         # GAME OVER
         elif estado_Atual == GAME_OVER:
@@ -230,31 +257,25 @@ while True:
                 estado_Atual = REGISTRANDO
             else:
                 estado_Atual = GAME_OVER
-                som.tocar_erro()
+                tocar_erro()
 
     # RENDER
     if estado_Atual == menu:
-        exibir_menu_principal(tela, desenhar_texto, fontes_jogo)
+        exibir_menu_principal(tela, desenhar_texto, fontes_jogo, opcao_menu)
 
     elif estado_Atual == jogando:
         exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
 
     elif estado_Atual == OPCOES:
         from src.ui.menus import exibir_opcoes
-
         exibir_opcoes(tela, desenhar_texto, fontes_jogo, opcao_opcoes, resolucoes)
+
     elif estado_Atual == GAME_OVER:
         exibir_game_over(tela, desenhar_texto, fontes_jogo, sistema_pontos.score, sistema_pontos.ranking)
 
     elif estado_Atual == REGISTRANDO:
         from src.ui.menus import exibir_registro_recorde
-
         exibir_registro_recorde(tela, desenhar_texto, fontes_jogo, nome_input)
-
-    elif estado_Atual == OPCOES:
-        from src.ui.menus import exibir_opcoes
-
-        exibir_opcoes(tela, desenhar_texto, fontes_jogo, opcao_opcoes, resolucoes)
 
     pygame.display.flip()
     relogio.tick(60)

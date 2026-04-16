@@ -1,14 +1,14 @@
 [
     {
+        "nome": "TUM",
+        "pontos": 4100
+    },
+    {
         "nome": "FUR",
         "pontos": 3700
     },
     {
         "nome": "GOD",
         "pontos": 2600
-    },
-    {
-        "nome": "KAI",
-        "pontos": 1700
     }
 ]

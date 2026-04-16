@@ -1,5 +1,5 @@
-from src.logic.gerador import sortear_desafio
-from src.logic.validador import verificar_resposta
+from .gerador import sortear_desafio # O ponto significa "nesta mesma pasta"
+from .validador import verificar_resposta # O ponto significa "nesta mesma pasta"
 
 def obter_novo_desafio(pontos):
     # Calcula o nível (1 a 5) a cada 5 pontos
