@@ -13,7 +13,6 @@ def inicializar_botoes():
     botao_sair = pygame.image.load("assets/images/Quit.png").convert_alpha()
     botao_config = pygame.image.load("assets/images/Config.png").convert_alpha()
     mao_seletora = pygame.image.load("assets/images/mao_seletora.png").convert_alpha()
-    mao_seletora = pygame.transform.smoothscale(mao_seletora, (80, 45))
 
 class botao():
     def __init__(self, x,y, imagem):
