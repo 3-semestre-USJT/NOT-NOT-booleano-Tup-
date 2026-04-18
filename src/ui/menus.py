@@ -1,3 +1,4 @@
+from math import sin
 from src.ui.cores import *
 import pygame
 import cv2
@@ -56,7 +57,7 @@ def exibir_menu_principal(tela, desenhar_texto_func, fontes, opcao_selecionada):
     desenhar_texto_func("TupãStudios", BRANCO, -250, fontes['media'])
     desenhar_texto_func("! INDEXERROR", BRANCO, -150, fontes['grande'])
     
-    play_button, config_button, quit_button = botao_escalonado(tela)
+    play_button, config_button, quit_button, img_mao_esc = botao_escalonado(tela)
 
     play_button.exibir_botao(tela)
     config_button.exibir_botao(tela)
@@ -70,10 +71,17 @@ def exibir_menu_principal(tela, desenhar_texto_func, fontes, opcao_selecionada):
     else:
         botao_focado = quit_button
 
+    # Efeito na maozinha
+    tempo = pygame.time.get_ticks()  
+    # 0.007 controla a velocidade, 8 controla a distância do balanço.
+    oscilacao = sin(tempo * 0.007) * 8
+
     # Desenha a mãozinha na esquerda do botão focado
-    mao_x = botao_focado.rect.left + 150
-    mao_y = botao_focado.rect.centery - (botoes.mao_seletora.get_height() // 2)
-    tela.blit(botoes.mao_seletora, (mao_x, mao_y))
+    mao_x = botao_focado.rect.right + (20 * (tela.get_width() / 800)) + oscilacao
+    mao_y = botao_focado.rect.centery - (img_mao_esc.get_height() // 2)
+    tela.blit(img_mao_esc, (mao_x, mao_y))
+
+    
 
 def botao_escalonado(tela):
     largura_tela, altura_tela = tela.get_size()
@@ -87,6 +95,12 @@ def botao_escalonado(tela):
     img_config = pygame.transform.smoothscale(botoes.botao_config, (int(botoes.botao_config.get_width() * escala_x), int(botoes.botao_config.get_height() * escala_y)))
     img_quit = pygame.transform.smoothscale(botoes.botao_sair, (int(botoes.botao_sair.get_width() * escala_x), int(botoes.botao_sair.get_height() * escala_y))) 
    
+   # Redimensionando a mãozinha seletora
+    proporcao = botoes.mao_seletora.get_width() / botoes.mao_seletora.get_height()
+    altura_alvo = int(img_play.get_height() * 0.5)
+    largura_alvo = int(altura_alvo * proporcao)
+    img_mao = pygame.transform.smoothscale(botoes.mao_seletora, (largura_alvo, altura_alvo))
+
     #Transforma posições fixas em porcentagens (posições relativas)
     x = largura_tela * 0.03125
 
@@ -100,10 +114,11 @@ def botao_escalonado(tela):
     config_button = botoes.botao(x, y_config, img_config)
     quit_button = botoes.botao(x, y_quit, img_quit)
     
-    return play_button, config_button, quit_button
+    return play_button, config_button, quit_button, img_mao
 
 def obter_botao_clicado(pos, tela): 
-    play_button, config_button, quit_button = botao_escalonado(tela)
+    play_button, config_button, quit_button, _ = botao_escalonado(tela)
+    # O ' _ ' é para o python ignorar a imagem da mãozinha
     
     if play_button.clicado(pos):
         return "play"

@@ -16,7 +16,7 @@ pygame.init()
 # Tela e FPS
 largura, altura = 1280, 720
 tela = pygame.display.set_mode((largura, altura))
-pygame.display.set_caption("!Yes !Yes - A Tupã Prodution")
+pygame.display.set_caption("! IndexError - A Tupã Production")
 relogio = pygame.time.Clock() # Controla a velocidade do jogo
 
 # Inicializa os botões após o display
