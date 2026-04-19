@@ -116,10 +116,10 @@ while True:
                 elif evento.key == pygame.K_DOWN: # Adicionei o DOWN para você conseguir navegar pela setinha tbm
                     opcao_menu = (opcao_menu + 1) % 3
 
-                elif evento.key == pygame.K_RETURN: # Navegação no menu usando as setinhas
+                elif evento.key == pygame.K_RETURN or pygame.K_KP_ENTER: # Navegação no menu usando as setinhas
                     if opcao_menu == 0:  # primeiro botao
-                        sistema_pontos.resetar_partida()
-                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        sistema_pontos.resetar_partida()    
+                        desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
                         estado_Atual = jogando
                     elif opcao_menu == 1:  # segundo botao
@@ -146,7 +146,7 @@ while True:
                 acao = obter_botao_clicado(pos,tela)
                 if acao == "play":
                     sistema_pontos.resetar_partida()
-                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                    desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
                     estado_Atual = jogando
                 elif acao == "config":
@@ -175,7 +175,7 @@ while True:
 
                     if opcao_menu == 0:  # JOGAR
                         sistema_pontos.resetar_partida()
-                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
                         estado_Atual = jogando
 
@@ -195,7 +195,7 @@ while True:
                     if logic.validar_jogada(escolha, desafio["corretas"]):
                         tocar_acerto()
                         sistema_pontos.registrar_acerto()
-                        desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                        desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
                     else:
                         if sistema_pontos.verificar_novo_recorde():
@@ -209,7 +209,7 @@ while True:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_r:
                     sistema_pontos.resetar_partida()
-                    desafio = logic.obter_novo_desafio(sistema_pontos.score)
+                    desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
                     estado_Atual = jogando
 

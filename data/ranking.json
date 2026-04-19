@@ -1,14 +1,14 @@
 [
     {
-        "nome": "TUM",
-        "pontos": 4100
+        "nome": "POI",
+        "pontos": 5400
     },
     {
-        "nome": "FUR",
-        "pontos": 3700
+        "nome": "LOU",
+        "pontos": 5400
     },
     {
-        "nome": "GOD",
-        "pontos": 2600
+        "nome": "RRR",
+        "pontos": 5400
     }
 ]
