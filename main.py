@@ -23,9 +23,18 @@ relogio = pygame.time.Clock() # Controla a velocidade do jogo
 from src.ui import botoes
 botoes.inicializar_botoes()
 
+imagem_gameplay_og = pygame.image.load("assets/images/img_gameplay.png").convert()
+imagem_gameplay = imagem_gameplay_og
+
 imagem_fundo_og = pygame.image.load("assets/images/img_menu.png").convert()
 imagem_fundo = pygame.transform.smoothscale(imagem_fundo_og, (largura, altura))
 
+imagem_loop_1 = pygame.image.load("assets/images/canoa_1.png").convert_alpha()
+imagem_loop_2 = pygame.image.load("assets/images/canoa_2.png").convert_alpha()
+animacao_perso = [imagem_loop_1, imagem_loop_2]
+
+deslocamento_x = 0
+deslocamento_y = 0
 
 # Fontes 
 fonte_Grande = pygame.font.Font(CAMINHO_FONTE, 35)
@@ -64,7 +73,7 @@ resolucoes = [
 
 
 def aplicar_resolucao(opcao):
-    global tela, largura, altura, imagem_fundo
+    global tela, largura, altura, imagem_fundo, imagem_gameplay
 
     if opcao == "FULLSCREEN":
         tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -73,6 +82,7 @@ def aplicar_resolucao(opcao):
         largura, altura = opcao
         tela = pygame.display.set_mode((largura, altura))
     imagem_fundo = escala_tela(imagem_fundo_og, tela)
+    imagem_gameplay = escala_tela(imagem_gameplay_og, tela)
 
 def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     tamanho_atual = fonte_base.get_height()
@@ -108,6 +118,9 @@ while True:
 
         # MENU
         if estado_Atual == menu:
+            deslocamento_y = 0
+            deslocamento_x = 0
+            
             if evento.type == pygame.KEYDOWN:
 
                 if evento.key == pygame.K_UP:
@@ -149,6 +162,8 @@ while True:
                     desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
                     estado_Atual = jogando
+                    deslocamento_y = 0
+                    deslocamento_x = 0
                 elif acao == "config":
                     estado_Atual = OPCOES    
                 elif acao == "quit":
@@ -186,11 +201,25 @@ while True:
         elif estado_Atual == jogando:
             if evento.type == pygame.KEYDOWN:
                 escolha = None
-                if evento.key == pygame.K_UP: escolha = "CIMA"
-                if evento.key == pygame.K_DOWN: escolha = "BAIXO"
-                if evento.key == pygame.K_LEFT: escolha = "ESQUERDA"
-                if evento.key == pygame.K_RIGHT: escolha = "DIREITA"
+                if evento.key == pygame.K_UP: 
+                    escolha = "CIMA"
+                    deslocamento_x = 0
+                    deslocamento_y = -220
+                if evento.key == pygame.K_DOWN: 
+                    escolha = "BAIXO"
+                    deslocamento_x = 0
+                    deslocamento_y = 220  
+                if evento.key == pygame.K_LEFT: 
+                    escolha = "ESQUERDA"
+                    deslocamento_y = 0
+                    deslocamento_x = -220
+                if evento.key == pygame.K_RIGHT: 
+                    escolha = "DIREITA"
+                    deslocamento_y = 0
+                    deslocamento_x = 220
 
+               
+                
                 if escolha:
                     if logic.validar_jogada(escolha, desafio["corretas"]):
                         tocar_acerto()
@@ -204,7 +233,7 @@ while True:
                             estado_Atual = GAME_OVER
                             tocar_erro()
 
-        # GAME OVER
+         # GAME OVER
         elif estado_Atual == GAME_OVER:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_r:
@@ -212,6 +241,8 @@ while True:
                     desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                     tempo_restante = sistema_pontos.calcular_tempo_limite()
                     estado_Atual = jogando
+                    deslocamento_y = 0
+                    deslocamento_x = 0
 
                 elif evento.key == pygame.K_ESCAPE:
                     estado_Atual = menu
@@ -224,29 +255,36 @@ while True:
                         sistema_pontos.salvar_no_ranking(nome_input)
                         nome_input = ""
                         estado_Atual = GAME_OVER
+                        
 
                 elif evento.key == pygame.K_BACKSPACE:
                     nome_input = nome_input[:-1]
 
                 elif len(nome_input) < 3:
                     if evento.unicode.isalpha():
-                        nome_input += evento.unicode.upper()
+                        nome_input += evento.unicode.upper()    
 
-        # OPÇÕES
-        elif estado_Atual == OPCOES:
-            if evento.type == pygame.KEYDOWN:
+    # Lógica de retorno da imagem
+    # Faz a imagem voltar suavemente para o centro (0, 0) a cada frame
 
-                if evento.key == pygame.K_UP:
-                    opcao_opcoes = (opcao_opcoes - 1) % len(resolucoes)
-
-                elif evento.key == pygame.K_DOWN:
-                    opcao_opcoes = (opcao_opcoes + 1) % len(resolucoes)
-
-                elif evento.key == pygame.K_RETURN:
-                    aplicar_resolucao(resolucoes[opcao_opcoes])
-
-                elif evento.key == pygame.K_ESCAPE:
-                    estado_Atual = menu
+    if estado_Atual == jogando:
+    
+        # --- Lógica de Retorno da Imagem ---
+        velocidade_retorno = 4.5
+        
+        if abs(deslocamento_x) < velocidade_retorno:
+            deslocamento_x = 0
+        elif deslocamento_x > 0:
+            deslocamento_x -= velocidade_retorno
+        elif deslocamento_x < 0:
+            deslocamento_x += velocidade_retorno
+            
+        if abs(deslocamento_y) < velocidade_retorno:
+            deslocamento_y = 0
+        elif deslocamento_y > 0:
+            deslocamento_y -= velocidade_retorno
+        elif deslocamento_y < 0:
+            deslocamento_y += velocidade_retorno
 
     # CRONÔMETRO
     if estado_Atual == jogando:
@@ -264,7 +302,7 @@ while True:
         exibir_menu_principal(tela, desenhar_texto, fontes_jogo, opcao_menu)
 
     elif estado_Atual == jogando:
-        exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante)
+        exibir_gameplay(tela, desenhar_texto, fontes_jogo, desafio, sistema_pontos, tempo_restante, imagem_gameplay, animacao_perso, (deslocamento_x, deslocamento_y))
 
     elif estado_Atual == OPCOES:
         from src.ui.menus import exibir_opcoes

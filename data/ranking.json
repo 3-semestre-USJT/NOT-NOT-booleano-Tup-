@@ -1,14 +1,14 @@
 [
     {
-        "nome": "POI",
+        "nome": "AAA",
         "pontos": 5400
     },
     {
-        "nome": "LOU",
-        "pontos": 5400
+        "nome": "AAA",
+        "pontos": 4500
     },
     {
-        "nome": "RRR",
-        "pontos": 5400
+        "nome": "AAA",
+        "pontos": 2300
     }
 ]

@@ -87,13 +87,19 @@ def botao_escalonado(tela):
     largura_tela, altura_tela = tela.get_size()
 
     # Calcula o multiplicador (baseado na sua tela original de 1280x720)
-    escala_x = largura_tela / 800
-    escala_y = altura_tela / 600
+    escala_x = largura_tela / 1280
+    escala_y = altura_tela / 720
+
+    fator_reducao = 0.30 
+
+    # Pega as dimensões e já aplica a redução + a escala da tela
+    largura_final = int(botoes.botao_play.get_width() * escala_x * fator_reducao)
+    altura_final = int(botoes.botao_play.get_height() * escala_y * fator_reducao)
 
     # Redimensiona as imagens dos botões para não ficarem minúsculas
-    img_play = pygame.transform.smoothscale(botoes.botao_play, (int(botoes.botao_play.get_width() * escala_x), int(botoes.botao_play.get_height() * escala_y)))
-    img_config = pygame.transform.smoothscale(botoes.botao_config, (int(botoes.botao_config.get_width() * escala_x), int(botoes.botao_config.get_height() * escala_y)))
-    img_quit = pygame.transform.smoothscale(botoes.botao_sair, (int(botoes.botao_sair.get_width() * escala_x), int(botoes.botao_sair.get_height() * escala_y))) 
+    img_play = pygame.transform.smoothscale(botoes.botao_play, (largura_final, altura_final))
+    img_config = pygame.transform.smoothscale(botoes.botao_config, (largura_final, altura_final))
+    img_quit = pygame.transform.smoothscale(botoes.botao_sair, (largura_final, altura_final)) 
    
    # Redimensionando a mãozinha seletora
     proporcao = botoes.mao_seletora.get_width() / botoes.mao_seletora.get_height()
@@ -105,9 +111,9 @@ def botao_escalonado(tela):
     x = largura_tela * 0.03125
 
     # Transforma o Y (250, 320, 390 divididos por 720)
-    y_play = altura_tela * 0.3472
+    y_play = altura_tela * 0.3072
     y_config = altura_tela * 0.4444
-    y_quit = altura_tela * 0.5416
+    y_quit = altura_tela * 0.5816
 
     # Cria e retorna as instâncias dos botões na posição certa e tamanho certo
     play_button = botoes.botao(x, y_play, img_play)
