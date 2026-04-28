@@ -123,13 +123,13 @@ while True:
             
             if evento.type == pygame.KEYDOWN:
 
-                if evento.key == pygame.K_UP:
+                if evento.key == pygame.K_UP or evento.key == pygame.K_w:
                     opcao_menu = (opcao_menu - 1) % 3 # 3 pois são 3 botoes
 
-                elif evento.key == pygame.K_DOWN: # Adicionei o DOWN para você conseguir navegar pela setinha tbm
+                elif evento.key == pygame.K_DOWN or evento.key == pygame.K_s: # Adicionei o DOWN para você conseguir navegar pela setinha tbm
                     opcao_menu = (opcao_menu + 1) % 3
 
-                elif evento.key == pygame.K_RETURN or pygame.K_KP_ENTER: # Navegação no menu usando as setinhas
+                elif evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER: # Navegação no menu usando as setinhas
                     if opcao_menu == 0:  # primeiro botao
                         sistema_pontos.resetar_partida()    
                         desafio = logic.obter_novo_desafio(sistema_pontos.combo)
@@ -173,10 +173,10 @@ while True:
         elif estado_Atual == OPCOES:
             if evento.type == pygame.KEYDOWN:
 
-                if evento.key == pygame.K_UP:
+                if evento.key == pygame.K_UP or evento.key == pygame.K_w:
                     opcao_opcoes = (opcao_opcoes - 1) % len(resolucoes)
 
-                elif evento.key == pygame.K_DOWN:
+                elif evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
                     opcao_opcoes = (opcao_opcoes + 1) % len(resolucoes)
 
                 elif evento.key == pygame.K_RETURN:
@@ -201,19 +201,19 @@ while True:
         elif estado_Atual == jogando:
             if evento.type == pygame.KEYDOWN:
                 escolha = None
-                if evento.key == pygame.K_UP: 
+                if evento.key == pygame.K_UP or evento.key == pygame.K_w: 
                     escolha = "CIMA"
                     deslocamento_x = 0
                     deslocamento_y = -220
-                if evento.key == pygame.K_DOWN: 
+                if evento.key == pygame.K_DOWN or evento.key == pygame.K_s: 
                     escolha = "BAIXO"
                     deslocamento_x = 0
                     deslocamento_y = 220  
-                if evento.key == pygame.K_LEFT: 
+                if evento.key == pygame.K_LEFT or evento.key == pygame.K_a: 
                     escolha = "ESQUERDA"
                     deslocamento_y = 0
                     deslocamento_x = -220
-                if evento.key == pygame.K_RIGHT: 
+                if evento.key == pygame.K_RIGHT or evento.key == pygame.K_d: 
                     escolha = "DIREITA"
                     deslocamento_y = 0
                     deslocamento_x = 220
