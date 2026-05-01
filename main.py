@@ -78,6 +78,7 @@ def aplicar_resolucao(opcao):
 
     if opcao == "FULLSCREEN":
         tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        largura, altura = tela.get_size()
     else:
         largura, altura = opcao
         tela = pygame.display.set_mode((largura, altura))
@@ -234,7 +235,7 @@ while True:
          # GAME OVER
         elif estado_Atual == GAME_OVER:
             if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_r:
+                if evento.key == pygame.K_r:    
                     sistema_pontos.resetar_partida()
                     desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                     tempo_restante = sistema_pontos.calcular_tempo_limite()

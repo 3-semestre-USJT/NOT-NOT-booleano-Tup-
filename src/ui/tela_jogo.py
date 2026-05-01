@@ -1,7 +1,7 @@
 from src.ui.cores import * # O * importa tudo
 import pygame
 
-def escalonar_animacao(lista_imagens, largura_janela, altura_janela, proporcao=0.20):
+def escalonar_animacao(lista_imagens, largura_janela, proporcao=0.20):
     # Impede que 'altura_janela' seja confundida com a 'proporcao'
     # Se proporcao for maior que 1, significa que o argumento veio errado do main.py
     if proporcao > 1.0:
@@ -45,8 +45,9 @@ def escalonar_animacao(lista_imagens, largura_janela, altura_janela, proporcao=0
     return novas_imagens
 
 def exibir_gameplay(tela, desenhar_texto_func, fontes, desafio, sistema_pontos, tempo_restante, imagem_gameplay, animacao_perso, deslocamento_perso):
-    # Desenha o fundo da gameplay
-    tela.blit(imagem_gameplay, (0,0))
+    
+    largura_tela, altura_tela = tela.get_size()
+    tela.blit(imagem_gameplay, (0,0)) # Desenha o fundo da gameplay
 
     dx, dy = deslocamento_perso
     
@@ -56,7 +57,6 @@ def exibir_gameplay(tela, desenhar_texto_func, fontes, desafio, sistema_pontos, 
     imagem_base = animacao_perso[frame_atual]
         
     # Animação de perspectiva
-    largura_tela, altura_tela = tela.get_size()
     y_referencia = (altura_tela // 2) + dy
     # O barco diminui conforme sobe (Y diminui)
     fator_perspectiva = max(0.65, min(y_referencia / (altura_tela // 2), 1.1))
@@ -84,7 +84,14 @@ def exibir_gameplay(tela, desenhar_texto_func, fontes, desafio, sistema_pontos, 
     tela.blit(imagem_final, (pos_x, pos_y))
     
     # Textos do jogo (HUD)
-    desenhar_texto_func(desafio["texto"], BRANCO, 250, fontes['grande'], max_largura=760)
-    desenhar_texto_func(f"Score: {sistema_pontos.score}", VERDE_VIBRANTE, -270, fontes['pequena'])
-    desenhar_texto_func(f"Combo: {sistema_pontos.combo}x (Mult: {sistema_pontos.multiplicador}x)", AMARELO, -310, fontes['pequena'])
-    desenhar_texto_func(f"Tempo: {tempo_restante:.1f}s", VERMELHO_VIVO, 300, fontes['pequena'])
+    largura_limite = int(largura_tela * 0.8) # Usa proporcional ao tamanho da tela (80%)
+    offset_base = 250 if altura_tela >= 720 else 180 # Diminui o tamanho se a tela for pequena
+    offset_texto = offset_base
+    offset_score = offset_base - 520 # (-270 era o que a gente estava usando pra alinhar) 
+    offset_combo = offset_base - 560 # (-310 era o que a gente estava usando pra alinhar)
+    offset_tempo = offset_base + 50  # (300 era o que a gente estava usando para alinhar)
+
+    desenhar_texto_func(desafio["texto"], BRANCO, offset_texto, fontes['grande'], max_largura=largura_limite)
+    desenhar_texto_func(f"Score: {sistema_pontos.score}", VERDE_VIBRANTE, offset_score, fontes['pequena'])
+    desenhar_texto_func(f"Combo: {sistema_pontos.combo}x (Mult: {sistema_pontos.multiplicador}x)", AMARELO, offset_combo, fontes['pequena'])
+    desenhar_texto_func(f"Tempo: {tempo_restante:.1f}s", VERMELHO_VIVO, offset_tempo, fontes['pequena'])
