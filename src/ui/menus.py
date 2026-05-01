@@ -87,7 +87,7 @@ def exibir_menu_principal(tela, desenhar_texto_func, fontes, opcao_selecionada):
 def botao_escalonado(tela):
     largura_tela, altura_tela = tela.get_size()
 
-    # Calcula o multiplicador (baseado na sua tela original de 1280x720)
+    # Calcula a escala
     escala_x = largura_tela / 1280
     escala_y = altura_tela / 720
 
@@ -136,9 +136,11 @@ def obter_botao_clicado(pos, tela):
     return None
 
 def exibir_opcoes(tela, desenhar_texto_func, fontes, opcao_selecionada, resolucoes):
+    largura_tela, altura_tela = tela.get_size()
     tela.fill(PRETO)
+    escala = altura_tela / 720
 
-    desenhar_texto_func("RESOLUÇÃO", BRANCO, -150, fontes['grande'])
+    desenhar_texto_func("RESOLUÇÃO", BRANCO, int(-150 * escala), fontes['grande'])
 
     for i, opcao in enumerate(resolucoes):
 
@@ -149,10 +151,11 @@ def exibir_opcoes(tela, desenhar_texto_func, fontes, opcao_selecionada, resoluco
 
         cor = AMARELO if i == opcao_selecionada else BRANCO
 
-        desenhar_texto_func(texto, cor, i * 60 -20, fontes['media'])
+        pos_y = int((i * 60 - 20) * escala)
+        desenhar_texto_func(texto, cor, pos_y, fontes['media'])
 
-    desenhar_texto_func("ENTER Para aplicar", CINZA_CLARO, 180, fontes['pequena'])
-    desenhar_texto_func("ESQ para voltar", CINZA_CLARO, 220, fontes['pequena']) 
+    desenhar_texto_func("ENTER Para aplicar", CINZA_CLARO, int(200 * escala), fontes['pequena'])
+    desenhar_texto_func("ESQ para voltar", CINZA_CLARO, int(240 * escala), fontes['pequena']) 
 
 def exibir_game_over(tela, desenhar_texto_func, fontes, score, ranking):
     tela.fill(VERMELHO_MORTE)

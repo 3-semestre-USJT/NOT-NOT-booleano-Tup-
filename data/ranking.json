@@ -1,14 +1,14 @@
 [
     {
+        "nome": "AAA",
+        "pontos": 11100
+    },
+    {
+        "nome": "RRR",
+        "pontos": 2000
+    },
+    {
         "nome": "RRR",
         "pontos": 1700
-    },
-    {
-        "nome": "EEE",
-        "pontos": 1000
-    },
-    {
-        "nome": "RRR",
-        "pontos": 800
     }
 ]
