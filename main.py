@@ -6,7 +6,7 @@ from src.ui.som import *   # Importa a ponte de som que criamos
 from src.logic.pontuacao import GerenciadorPontuacao 
 from src.ui.cores import * # Para organizar a interface
 from src.ui.menus import exibir_menu_principal, exibir_game_over, exibir_video_intro, obter_botao_clicado, escala_tela
-from src.ui.tela_jogo import exibir_gameplay
+from src.ui.tela_jogo import exibir_gameplay, escalonar_animacao
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CAMINHO_FONTE = os.path.join(BASE_DIR, "assets", "fonts", "PressStart2P-Regular.ttf")
@@ -23,18 +23,22 @@ relogio = pygame.time.Clock() # Controla a velocidade do jogo
 from src.ui import botoes
 botoes.inicializar_botoes()
 
-imagem_gameplay_og = pygame.image.load("assets/images/img_gameplay.png").convert()
-imagem_gameplay = imagem_gameplay_og
-
 imagem_fundo_og = pygame.image.load("assets/images/img_menu.png").convert()
 imagem_fundo = pygame.transform.smoothscale(imagem_fundo_og, (largura, altura))
 
+imagem_gameplay_og = pygame.image.load("assets/images/img_gameplay.png").convert()
+imagem_gameplay = pygame.transform.smoothscale(imagem_gameplay_og, (largura, altura))
+
 imagem_loop_1 = pygame.image.load("assets/images/canoa_1.png").convert_alpha()
 imagem_loop_2 = pygame.image.load("assets/images/canoa_2.png").convert_alpha()
-animacao_perso = [imagem_loop_1, imagem_loop_2]
+animacao_perso = escalonar_animacao([imagem_loop_1, imagem_loop_2], largura, altura)
 
 deslocamento_x = 0
 deslocamento_y = 0
+alvo_x = 0
+alvo_y = 0
+suavidade_ida = 0.15 # Controla a velocidade da ida
+suavidade_volta = 0.07 # Controla a velocidade da volta para o centro
 
 # Fontes 
 fonte_Grande = pygame.font.Font(CAMINHO_FONTE, 35)
@@ -69,20 +73,18 @@ resolucoes = [
     "FULLSCREEN" 
 ]
 
-# Teste teste, ignorar isso
-
-
 def aplicar_resolucao(opcao):
-    global tela, largura, altura, imagem_fundo, imagem_gameplay
+    global tela, largura, altura, imagem_fundo, imagem_gameplay, animacao_perso
 
     if opcao == "FULLSCREEN":
         tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        largura, altura = tela.get_size()
     else:
         largura, altura = opcao
         tela = pygame.display.set_mode((largura, altura))
+    
     imagem_fundo = escala_tela(imagem_fundo_og, tela)
     imagem_gameplay = escala_tela(imagem_gameplay_og, tela)
+    animacao_perso = escalonar_animacao([imagem_loop_1, imagem_loop_2], largura, altura)
 
 def desenhar_texto(texto, cor, y_offset, fonte_base, max_largura=750):
     tamanho_atual = fonte_base.get_height()
@@ -107,6 +109,19 @@ while True:
             pygame.quit()
             sys.exit()
             continue
+    
+    # Logica do movimento do barco
+    # Faz o deslocamento atual chegar perto do alvo (Movimento de IDA)
+    deslocamento_x += (alvo_x - deslocamento_x) * suavidade_ida
+    deslocamento_y += (alvo_y - deslocamento_y) * suavidade_ida
+
+    # Faz o alvo ser puxado de volta para o centro constantemente (Movimento de VOLTA)
+    alvo_x += (0 - alvo_x) * suavidade_volta
+    alvo_y += (0 - alvo_y) * suavidade_volta
+
+    # Limpeza para evitar que o computador fique calculando números infinitesimais
+    if abs(deslocamento_x) < 0.1: deslocamento_x = 0
+    if abs(deslocamento_y) < 0.1: deslocamento_y = 0
 
     # ==== Desenha a imagem de Fundo ========
     tela.blit(imagem_fundo,(0,0))
@@ -118,8 +133,6 @@ while True:
 
         # MENU
         if estado_Atual == menu:
-            deslocamento_y = 0
-            deslocamento_x = 0
             
             if evento.type == pygame.KEYDOWN:
 
@@ -134,11 +147,12 @@ while True:
                         sistema_pontos.resetar_partida()    
                         desafio = logic.obter_novo_desafio(sistema_pontos.combo)
                         tempo_restante = sistema_pontos.calcular_tempo_limite()
+                        deslocamento_y = 0
+                        deslocamento_x = 0
                         estado_Atual = jogando
                     elif opcao_menu == 1:  # segundo botao
                         estado_Atual = OPCOES
                     elif opcao_menu == 2:  # terceiro botao
-                        estado_Atual = quit
                         pygame.quit()
                         sys.exit()
 
@@ -179,23 +193,11 @@ while True:
                 elif evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
                     opcao_opcoes = (opcao_opcoes + 1) % len(resolucoes)
 
-                elif evento.key == pygame.K_RETURN:
+                elif evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                     aplicar_resolucao(resolucoes[opcao_opcoes])
 
                 elif evento.key == pygame.K_ESCAPE:
                     estado_Atual = menu
-
-
-                elif evento.key == pygame.K_RETURN:
-
-                    if opcao_menu == 0:  # JOGAR
-                        sistema_pontos.resetar_partida()
-                        desafio = logic.obter_novo_desafio(sistema_pontos.combo)
-                        tempo_restante = sistema_pontos.calcular_tempo_limite()
-                        estado_Atual = jogando
-
-                    elif opcao_menu == 1:  # OPÇÕES
-                        estado_Atual = OPCOES
 
         # JOGO
         elif estado_Atual == jogando:
@@ -203,20 +205,16 @@ while True:
                 escolha = None
                 if evento.key == pygame.K_UP or evento.key == pygame.K_w: 
                     escolha = "CIMA"
-                    deslocamento_x = 0
-                    deslocamento_y = -220
+                    alvo_y = -300
                 if evento.key == pygame.K_DOWN or evento.key == pygame.K_s: 
                     escolha = "BAIXO"
-                    deslocamento_x = 0
-                    deslocamento_y = 220  
+                    alvo_y = 300  
                 if evento.key == pygame.K_LEFT or evento.key == pygame.K_a: 
                     escolha = "ESQUERDA"
-                    deslocamento_y = 0
-                    deslocamento_x = -220
+                    alvo_x = -350
                 if evento.key == pygame.K_RIGHT or evento.key == pygame.K_d: 
                     escolha = "DIREITA"
-                    deslocamento_y = 0
-                    deslocamento_x = 220
+                    alvo_x = 350
 
                
                 
@@ -231,7 +229,7 @@ while True:
                             estado_Atual = REGISTRANDO
                         else:
                             estado_Atual = GAME_OVER
-                            tocar_erro()
+                        tocar_erro()
 
          # GAME OVER
         elif estado_Atual == GAME_OVER:
@@ -250,7 +248,7 @@ while True:
         # REGISTRO
         elif estado_Atual == REGISTRANDO:
             if evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_RETURN:
+                if evento.key == pygame.K_RETURN or evento.key == pygame.K_KP_ENTER:
                     if len(nome_input) == 3:
                         sistema_pontos.salvar_no_ranking(nome_input)
                         nome_input = ""

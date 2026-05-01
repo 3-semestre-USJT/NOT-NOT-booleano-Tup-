@@ -49,6 +49,7 @@ def exibir_video_intro(tela, caminho_video):
         relogio.tick(fps)
 
     cap.release()
+    pygame.display.set_mode(tela.get_size())
     return ir_para_menu
 
 
